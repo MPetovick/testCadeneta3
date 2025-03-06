@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RadialStitch Pro - Editor de Crochet</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <i class="fas fa-crop-alt"></i>
+            <h1>RadialStitch Pro</h1>
+        </div>
+    </nav>
+
+    <main class="editor-container">
+        <!-- Toolbars y controles se generan dinámicamente en JS -->
+        <div class="canvas-wrapper">
+            <canvas id="patternCanvas"></canvas>
+            <div class="zoom-controls">
+                <button id="zoomIn"><i class="fas fa-search-plus"></i></button>
+                <button id="zoomOut"><i class="fas fa-search-minus"></i></button>
+                <button id="resetView"><i class="fas fa-expand-arrows-alt"></i></button>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="app.js" type="module"></script>
+</body>
+</html>
