@@ -1,10 +1,16 @@
-// Core functionality
 class CrochetEditor {
     constructor() {
+        this.stitchTypes = new Map([
+            ['chain', { symbol: '⛓', color: '#e74c3c' }],
+            ['single', { symbol: '•', color: '#2ecc71' }],
+            ['double', { symbol: '▲', color: '#3498db' }]
+        ]);
+
         this.initCanvas();
         this.initState();
         this.initUI();
         this.initEvents();
+        this.draw();
     }
 
     initCanvas() {
@@ -18,74 +24,79 @@ class CrochetEditor {
             rings: [{ segments: 8, points: Array(8).fill('chain') }],
             scale: 1,
             offset: { x: 0, y: 0 },
-            selectedStitch: 'single',
+            selectedStitch: 'chain',
             ringSpacing: 50,
-            history: [],
-            currentHistory: -1
+            guideLines: 8
         };
     }
 
     initUI() {
-        this.ui = {
-            stitches: new Map([
-                ['chain', { symbol: '⛓', color: '#e74c3c' }],
-                ['single', { symbol: '•', color: '#2ecc71' }],
-                ['double', { symbol: '▲', color: '#3498db' }]
-            ]),
-            tools: [
-                { id: 'zoomIn', action: () => this.adjustZoom(0.1) },
-                { id: 'zoomOut', action: () => this.adjustZoom(-0.1) },
-                { id: 'resetView', action: () => this.resetView() }
-            ]
-        };
-        this.setupTools();
-    }
-
-    resizeCanvas() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight - 56;
-    }
-
-    setupTools() {
-        const container = document.querySelector('.zoom-controls');
-        this.ui.tools.forEach(tool => {
+        // Stitch palette
+        const palette = document.getElementById('stitchPalette');
+        this.stitchTypes.forEach((value, key) => {
             const btn = document.createElement('button');
-            btn.id = tool.id;
-            btn.innerHTML = document.getElementById(tool.id).innerHTML;
-            btn.addEventListener('click', tool.action);
-            container.appendChild(btn);
+            btn.className = 'stitch-btn';
+            btn.style.color = value.color;
+            btn.textContent = value.symbol;
+            btn.title = key;
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.stitch-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.state.selectedStitch = key;
+            });
+            palette.appendChild(btn);
+        });
+        palette.firstChild.classList.add('active');
+
+        // Ring spacing control
+        const ringSpacing = document.getElementById('ringSpacing');
+        const ringSpacingValue = document.getElementById('ringSpacingValue');
+        ringSpacing.addEventListener('input', (e) => {
+            this.state.ringSpacing = parseInt(e.target.value);
+            ringSpacingValue.textContent = `${e.target.value}px`;
+            this.draw();
         });
     }
 
     initEvents() {
         window.addEventListener('resize', () => this.resizeCanvas());
+        
+        // Canvas interactions
         this.canvas.addEventListener('click', e => this.handleClick(e));
         this.canvas.addEventListener('wheel', e => this.handleWheel(e));
+        
+        // Zoom controls
+        document.getElementById('zoomIn').addEventListener('click', () => this.adjustZoom(0.1));
+        document.getElementById('zoomOut').addEventListener('click', () => this.adjustZoom(-0.1));
+        document.getElementById('resetView').addEventListener('click', () => this.resetView());
+    }
+
+    resizeCanvas() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight - document.querySelector('.navbar').clientHeight;
+        this.draw();
     }
 
     handleClick(e) {
         const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left - this.state.offset.x;
-        const y = e.clientY - rect.top - this.state.offset.y;
+        const x = e.clientX - rect.left - this.state.offset.x - this.canvas.width/2;
+        const y = e.clientY - rect.top - this.state.offset.y - this.canvas.height/2;
         
-        const ring = Math.floor(Math.sqrt(x**2 + y**2) / this.state.ringSpacing);
-        const angle = Math.atan2(y, x);
+        const distance = Math.sqrt(x**2 + y**2);
+        const ring = Math.floor(distance / this.state.ringSpacing);
+        
+        if (ring < 0 || ring >= this.state.rings.length) return;
+        
+        const angle = Math.atan2(y, x) + Math.PI;
         const segment = Math.floor(angle / (Math.PI * 2) * this.state.rings[ring].segments);
         
-        this.addStitch(ring, segment);
+        this.state.rings[ring].points[segment] = this.state.selectedStitch;
         this.draw();
     }
 
-    addStitch(ring, segment) {
-        if (!this.state.rings[ring]) return;
-        this.state.rings[ring].points[segment] = this.state.selectedStitch;
-        this.saveState();
-    }
-
-    saveState() {
-        this.state.history = this.state.history.slice(0, this.state.currentHistory + 1);
-        this.state.history.push(JSON.stringify(this.state));
-        this.state.currentHistory++;
+    handleWheel(e) {
+        e.preventDefault();
+        this.adjustZoom(e.deltaY > 0 ? -0.1 : 0.1);
     }
 
     adjustZoom(amount) {
@@ -99,13 +110,10 @@ class CrochetEditor {
         this.draw();
     }
 
-    handleWheel(e) {
-        e.preventDefault();
-        this.adjustZoom(e.deltaY > 0 ? -0.1 : 0.1);
-    }
-
     draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Apply transformations
         this.ctx.save();
         this.ctx.translate(
             this.canvas.width/2 + this.state.offset.x,
@@ -113,15 +121,31 @@ class CrochetEditor {
         );
         this.ctx.scale(this.state.scale, this.state.scale);
         
-        this.drawRings();
+        this.drawGrid();
         this.drawStitches();
         this.ctx.restore();
     }
 
-    drawRings() {
+    drawGrid() {
         this.ctx.strokeStyle = '#ddd';
-        this.state.rings.forEach((_, i) => {
-            const radius = (i + 1) * this.state.ringSpacing;
+        this.ctx.lineWidth = 1;
+        
+        // Guide lines
+        const angleStep = (Math.PI * 2) / this.state.guideLines;
+        for (let i = 0; i < this.state.guideLines; i++) {
+            const angle = i * angleStep;
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, 0);
+            this.ctx.lineTo(
+                Math.cos(angle) * this.state.ringSpacing * this.state.rings.length,
+                Math.sin(angle) * this.state.ringSpacing * this.state.rings.length
+            );
+            this.ctx.stroke();
+        }
+        
+        // Rings
+        this.state.rings.forEach((_, index) => {
+            const radius = (index + 1) * this.state.ringSpacing;
             this.ctx.beginPath();
             this.ctx.arc(0, 0, radius, 0, Math.PI * 2);
             this.ctx.stroke();
@@ -131,23 +155,26 @@ class CrochetEditor {
     drawStitches() {
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
+        this.ctx.font = '20px Arial';
+        
         this.state.rings.forEach((ring, ringIndex) => {
             const radius = (ringIndex + 0.5) * this.state.ringSpacing;
             const angleStep = (Math.PI * 2) / ring.segments;
             
-            ring.points.forEach((stitch, segment) => {
-                const angle = segment * angleStep;
-                const x = Math.cos(angle) * radius;
-                const y = Math.sin(angle) * radius;
+            ring.points.forEach((stitch, segmentIndex) => {
+                const angle = segmentIndex * angleStep;
+                const { symbol, color } = this.stitchTypes.get(stitch);
                 
-                const { symbol, color } = this.ui.stitches.get(stitch);
                 this.ctx.fillStyle = color;
-                this.ctx.font = `${20 / this.state.scale}px Arial`;
-                this.ctx.fillText(symbol, x, y);
+                this.ctx.fillText(
+                    symbol,
+                    Math.cos(angle) * radius,
+                    Math.sin(angle) * radius
+                );
             });
         });
     }
 }
 
-// Initialize app
+// Initialize
 window.addEventListener('DOMContentLoaded', () => new CrochetEditor());
