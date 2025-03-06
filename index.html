@@ -16,7 +16,18 @@
     </nav>
 
     <main class="editor-container">
-        <!-- Toolbars y controles se generan dinámicamente en JS -->
+        <div class="main-toolbar">
+            <div class="tool-group">
+                <button class="tool-btn" id="newBtn" title="Nuevo"><i class="fas fa-file"></i></button>
+                <button class="tool-btn" id="saveBtn" title="Guardar"><i class="fas fa-save"></i></button>
+                <div class="stitch-palette" id="stitchPalette"></div>
+            </div>
+            <div class="tool-group">
+                <input type="range" id="ringSpacing" min="30" max="80" value="50">
+                <span id="ringSpacingValue">50px</span>
+            </div>
+        </div>
+
         <div class="canvas-wrapper">
             <canvas id="patternCanvas"></canvas>
             <div class="zoom-controls">
