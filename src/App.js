@@ -1,28 +1,98 @@
-export const STITCH_TYPES = new Map([
-    ['cadeneta', { symbol: '#', color: '#e74c3c', desc: 'Cadena base' }],
-    ['punt_baix', { symbol: '•', color: '#2ecc71', desc: 'Punto bajo' }],
-    ['punt_pla', { symbol: '-', color: '#3498db', desc: 'Punto plano' }],
-    ['punt_mitja', { symbol: '●', color: '#f1c40f', desc: 'Punto medio' }],
-    ['punt_alt', { symbol: '↑', color: '#9b59b6', desc: 'Punto alto' }],
-    ['punt_doble_alt', { symbol: '⇑', color: '#e67e22', desc: 'Punto doble alto' }],
-    ['picot', { symbol: '¤', color: '#1abc9c', desc: 'Picot decorativo' }]
-]);
+import { useState, useRef } from 'react';
+import { Button, TextField, Select, MenuItem, Box } from '@mui/material';
+import { saveAs } from 'file-saver';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import TextEditor from './components/TextEditor';
+import MatrixGrid from './components/MatrixGrid';
+import ThreeDViewer from './components/ThreeDViewer';
+import './styles.css';
 
-export const DEFAULT_STATE = {
-    rings: [
-        { segments: 8, points: Array(8).fill('cadeneta') }, // Anillo 0 con cadenetas
-        { segments: 8, points: [] } // Anillo 1 vacío
-    ],
-    history: [],
-    historyIndex: 0,
-    scale: 1,
-    targetScale: 1,
-    offset: { x: 0, y: 0 },
-    targetOffset: { x: 0, y: 0 },
-    selectedStitch: 'punt_baix',
-    guideLines: 8,
-    ringSpacing: 50,
-    isDragging: false,
-    lastPos: { x: 0, y: 0 },
-    pinchDistance: null
+const defaultColors = {
+  sc: '#ff0000',
+  dc: '#00ff00',
+  hdc: '#0000ff',
+  ch: '#ffff00',
+  slst: '#ff00ff'
 };
+
+const App = () => {
+  const [text, setText] = useState('');
+  const [matrix, setMatrix] = useState([]);
+  const [colors, setColors] = useState(defaultColors);
+  const [selectedStitch, setSelectedStitch] = useState('sc');
+  const [selectedColor, setSelectedColor] = useState('#ff0000');
+  const threeRef = useRef();
+
+  const parseText = (text) => {
+    const rows = text.split('\n').map(row => row.trim().split(' '));
+    setMatrix(rows);
+  };
+
+  const handleExportPDF = async () => {
+    const pdf = new jsPDF();
+    
+    // Texto
+    pdf.text(10, 10, 'Patrón de Crochet:\n' + text);
+    
+    // Captura 2D
+    const canvas2D = await html2canvas(document.querySelector('.matrix-grid'));
+    pdf.addImage(canvas2D.toDataURL('image/png'), 'PNG', 10, 30, 180, 100);
+    
+    // Captura 3D
+    const canvas3D = threeRef.current.querySelector('canvas');
+    pdf.addImage(canvas3D.toDataURL('image/png'), 'PNG', 10, 140, 180, 100);
+    
+    pdf.save('patron-crochet.pdf');
+  };
+
+  return (
+    <div className="app">
+      <h1>Crochet Pattern Maker</h1>
+      
+      <div className="editor-section">
+        <TextEditor 
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            parseText(e.target.value);
+          }}
+        />
+        
+        <div className="tools">
+          <Select
+            value={selectedStitch}
+            onChange={(e) => setSelectedStitch(e.target.value)}
+          >
+            {Object.keys(colors).map(stitch => (
+              <MenuItem key={stitch} value={stitch}>{stitch.toUpperCase()}</MenuItem>
+            ))}
+          </Select>
+          
+          <input 
+            type="color" 
+            value={selectedColor}
+            onChange={(e) => setSelectedColor(e.target.value)}
+          />
+        </div>
+      </div>
+      
+      <div className="preview-section">
+        <MatrixGrid matrix={matrix} colors={colors} />
+        <div ref={threeRef}>
+          <ThreeDViewer matrix={matrix} colors={colors} />
+        </div>
+      </div>
+      
+      <Button 
+        variant="contained" 
+        color="primary" 
+        onClick={handleExportPDF}
+      >
+        Exportar PDF
+      </Button>
+    </div>
+  );
+};
+
+export default App;
