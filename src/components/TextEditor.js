@@ -1,9 +1,17 @@
-export const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+import { TextField } from '@mui/material';
 
-export const debounce = (fn, wait) => {
-    let timeout;
-    return (...args) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => fn(...args), wait);
-    };
-};
+const TextEditor = ({ value, onChange }) => (
+  <TextField
+    multiline
+    fullWidth
+    rows={10}
+    variant="outlined"
+    label="Ingresa tu patrón"
+    placeholder="Ejemplo:\nsc sc dc\nhdc ch slst"
+    value={value}
+    onChange={onChange}
+    sx={{ fontFamily: 'monospace', margin: '1rem 0' }}
+  />
+);
+
+export default TextEditor;
