@@ -1,7 +1,7 @@
 {
   "name": "crochet-pattern-maker",
   "version": "1.0.0",
-  "homepage": "https://<tu-usuario>.github.io/crochet-pattern-maker",
+  "homepage": "https://mpetovick.github.io/testCadeneta3/",
   "dependencies": {
     "@react-three/drei": "^9.0.0",
     "@react-three/fiber": "^8.0.0",
