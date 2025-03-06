@@ -1,0 +1,83 @@
+:root {
+    --primary: #2c3e50;
+    --secondary: #3498db;
+    --background: #f8f9fa;
+    --text: #2c3e50;
+    --toolbar-bg: #ffffff;
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--background);
+    color: var(--text);
+    line-height: 1.6;
+}
+
+.navbar {
+    padding: 0.5rem 1rem;
+    background: var(--primary);
+    color: white;
+    box-shadow: var(--shadow);
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.canvas-wrapper {
+    margin-top: 3.5rem;
+    position: relative;
+    flex: 1;
+}
+
+#patternCanvas {
+    width: 100%;
+    height: 100%;
+}
+
+.zoom-controls {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 0.5rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+}
+
+button {
+    padding: 0.5rem;
+    background: var(--background);
+    border: 1px solid var(--primary);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+button:hover {
+    background: var(--secondary);
+    color: white;
+}
+
+.tooltip {
+    position: absolute;
+    background: var(--toolbar-bg);
+    padding: 0.5rem;
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    max-width: 200px;
+    z-index: 1000;
+    font-size: 0.9rem;
+}
