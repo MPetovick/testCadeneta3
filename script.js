@@ -1,4 +1,3 @@
-// Definir los símbolos de crochet y sus descripciones
 const stitches = [
     { symbol: "○", name: "Cadeneta (ch)", description: "Punto de cadena" },
     { symbol: "●", name: "Punto deslizado (sl st)", description: "Punto deslizado" },
