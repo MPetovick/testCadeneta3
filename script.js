@@ -1,3 +1,4 @@
+// Definir los símbolos de crochet y sus descripciones
 const stitches = [
     { symbol: "○", name: "Cadeneta (ch)", description: "Punto de cadena" },
     { symbol: "●", name: "Punto deslizado (sl st)", description: "Punto deslizado" },
@@ -11,7 +12,7 @@ const stitches = [
 // Elementos del DOM
 const stitchPalette = document.getElementById("stitchPalette");
 const stitchHelpBtn = document.getElementById("stitchHelpBtn");
-const stitchTooltip = document.getElementById("stitchTooltip");
+const helpImageContainer = document.querySelector(".help-image-container");
 const canvas = document.getElementById("patternCanvas");
 const ctx = canvas.getContext("2d");
 const guideLines = document.getElementById("guideLines");
@@ -31,7 +32,6 @@ let offsetY = 0;
 let isDragging = false;
 let startX, startY;
 let patternSequence = [];
-let initialPinchDistance = null;
 
 // Generar botones de la paleta de puntadas
 function createStitchButtons() {
@@ -51,7 +51,7 @@ function selectStitch(stitch, button) {
     selectedStitch = stitch;
     document.querySelectorAll(".stitch-btn").forEach(btn => btn.classList.remove("active"));
     button.classList.add("active");
-
+    
     const stitchCount = patternSequence.length + 1;
     patternSequence.push({ ...stitch, position: stitchCount });
     updatePatternLog();
@@ -76,48 +76,6 @@ function updatePatternLog() {
     patternLog.scrollTop = patternLog.scrollHeight;
 }
 
-// Mostrar tooltip al pasar el mouse o tocar
-stitchPalette.addEventListener("mouseover", (e) => {
-    if (e.target.classList.contains("stitch-btn")) {
-        showTooltip(e.target, e);
-    }
-});
-
-stitchPalette.addEventListener("mouseout", hideTooltip);
-
-stitchPalette.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    const target = e.target.closest(".stitch-btn");
-    if (target) {
-        const stitch = stitches.find(s => s.symbol === target.textContent);
-        if (stitch) selectStitch(stitch, target);
-        showTooltip(target, e.touches[0]);
-    }
-}, { passive: false });
-
-// Mostrar tooltip al hacer clic en el botón de ayuda
-stitchHelpBtn.addEventListener("click", () => {
-    const helpText = stitches.map(s => `${s.symbol}: ${s.name} - ${s.description}`).join("\n");
-    stitchTooltip.textContent = helpText;
-    stitchTooltip.style.left = "50%";
-    stitchTooltip.style.top = "50%";
-    stitchTooltip.style.transform = "translate(-50%, -50%)";
-    stitchTooltip.classList.remove("hidden");
-    setTimeout(hideTooltip, 5000);
-});
-
-// Funciones de tooltip
-function showTooltip(element, event) {
-    stitchTooltip.textContent = `${element.dataset.name}: ${element.dataset.description}`;
-    stitchTooltip.style.left = `${event.pageX + 10}px`;
-    stitchTooltip.style.top = `${event.pageY + 10}px`;
-    stitchTooltip.classList.remove("hidden");
-}
-
-function hideTooltip() {
-    stitchTooltip.classList.add("hidden");
-}
-
 // Configurar el canvas
 function resizeCanvas() {
     canvas.width = canvas.offsetWidth;
@@ -135,9 +93,9 @@ function drawPattern() {
     const centerY = 0;
     const divisions = parseInt(guideLines.value);
     const spacing = parseInt(ringSpacing.value);
-    const totalRings = Math.max(1, Math.ceil(patternSequence.length / divisions));
+    const totalRings = Math.max(1, Math.ceil(patternSequence.length / divisions)); // Al menos 1 anillo
 
-    // Dibujar anillos
+    // Dibujar anillos según la cantidad de puntos
     for (let r = 1; r <= totalRings; r++) {
         ctx.beginPath();
         ctx.arc(centerX, centerY, r * spacing, 0, Math.PI * 2);
@@ -146,7 +104,7 @@ function drawPattern() {
         ctx.stroke();
     }
 
-    // Dibujar líneas guía
+    // Dibujar líneas guía hasta el anillo más externo
     for (let i = 0; i < divisions; i++) {
         const angle = (i / divisions) * Math.PI * 2;
         ctx.beginPath();
@@ -157,7 +115,7 @@ function drawPattern() {
         ctx.stroke();
     }
 
-    // Dibujar puntos
+    // Dibujar puntos de crochet en el patrón
     patternSequence.forEach((stitch, index) => {
         const ring = Math.floor(index / divisions) + 1;
         const positionInRing = index % divisions;
@@ -175,57 +133,41 @@ function drawPattern() {
     ctx.restore();
 }
 
-// Manejo de interacciones táctiles
-canvas.addEventListener("touchstart", (e) => {
-    if (e.touches.length === 1) {
-        startDragging(e.touches[0]);
-    } else if (e.touches.length === 2) {
-        handlePinchStart(e);
-    }
-}, { passive: false });
+// Interacción con el canvas
+canvas.addEventListener("mousedown", startDragging);
+canvas.addEventListener("mousemove", drag);
+canvas.addEventListener("mouseup", stopDragging);
+canvas.addEventListener("mouseleave", stopDragging);
 
-canvas.addEventListener("touchmove", (e) => {
-    if (e.touches.length === 1) {
-        drag(e.touches[0]);
-    } else if (e.touches.length === 2) {
-        handlePinchMove(e);
-    }
-}, { passive: false });
+canvas.addEventListener("touchstart", startDragging, { passive: false });
+canvas.addEventListener("touchmove", drag, { passive: false });
+canvas.addEventListener("touchend", stopDragging);
+canvas.addEventListener("touchcancel", stopDragging);
 
-function handlePinchStart(e) {
-    const touch1 = e.touches[0];
-    const touch2 = e.touches[1];
-    initialPinchDistance = Math.hypot(
-        touch2.clientX - touch1.clientX,
-        touch2.clientY - touch1.clientY
-    );
-}
-
-function handlePinchMove(e) {
-    const touch1 = e.touches[0];
-    const touch2 = e.touches[1];
-    const currentDistance = Math.hypot(
-        touch2.clientX - touch1.clientX,
-        touch2.clientY - touch1.clientY
-    );
-    
-    const scaleFactor = currentDistance / initialPinchDistance;
-    zoomLevel = Math.min(Math.max(zoomLevel * scaleFactor, 0.5), 3);
-    initialPinchDistance = currentDistance;
-    drawPattern();
-}
-
-// Manejo de arrastre
 function startDragging(e) {
-    startX = e.clientX - offsetX;
-    startY = e.clientY - offsetY;
+    e.preventDefault();
+    if (e.type === "touchstart") {
+        const touch = e.touches[0];
+        startX = touch.clientX - offsetX;
+        startY = touch.clientY - offsetY;
+    } else {
+        startX = e.clientX - offsetX;
+        startY = e.clientY - offsetY;
+    }
     isDragging = true;
 }
 
 function drag(e) {
     if (!isDragging) return;
-    offsetX = e.clientX - startX;
-    offsetY = e.clientY - startY;
+    e.preventDefault();
+    if (e.type === "touchmove") {
+        const touch = e.touches[0];
+        offsetX = touch.clientX - startX;
+        offsetY = touch.clientY - startY;
+    } else {
+        offsetX = e.clientX - startX;
+        offsetY = e.clientY - startY;
+    }
     drawPattern();
 }
 
@@ -233,32 +175,30 @@ function stopDragging() {
     isDragging = false;
 }
 
-// Eventos de ratón
-canvas.addEventListener("mousedown", (e) => startDragging(e));
-canvas.addEventListener("mousemove", (e) => drag(e));
-canvas.addEventListener("mouseup", stopDragging);
-canvas.addEventListener("mouseleave", stopDragging);
-
 // Controles de zoom
-zoomIn.addEventListener("click", (e) => {
+zoomIn.addEventListener("click", zoomInHandler);
+zoomOut.addEventListener("click", zoomOutHandler);
+resetView.addEventListener("click", resetViewHandler);
+
+function zoomInHandler(e) {
     e.preventDefault();
     zoomLevel = Math.min(zoomLevel + 0.2, 3);
     drawPattern();
-});
+}
 
-zoomOut.addEventListener("click", (e) => {
+function zoomOutHandler(e) {
     e.preventDefault();
     zoomLevel = Math.max(zoomLevel - 0.2, 0.5);
     drawPattern();
-});
+}
 
-resetView.addEventListener("click", (e) => {
+function resetViewHandler(e) {
     e.preventDefault();
     zoomLevel = 1;
     offsetX = 0;
     offsetY = 0;
     drawPattern();
-});
+}
 
 // Actualizar valores de configuración
 guideLines.addEventListener("input", () => {
@@ -272,9 +212,26 @@ ringSpacing.addEventListener("input", () => {
     drawPattern();
 });
 
+// Mostrar/ocultar la imagen en pantallas pequeñas
+stitchHelpBtn.addEventListener("click", () => {
+    if (helpImageContainer.style.display === "none" || helpImageContainer.style.display === "") {
+        helpImageContainer.style.display = "block"; // Mostrar la imagen
+    } else {
+        helpImageContainer.style.display = "none"; // Ocultar la imagen
+    }
+});
+
+// Ocultar la imagen si se hace clic fuera de ella
+window.addEventListener("click", (e) => {
+    if (!helpImageContainer.contains(e.target) && e.target !== stitchHelpBtn) {
+        helpImageContainer.style.display = "none"; // Ocultar la imagen
+    }
+});
+
 // Inicialización
 window.addEventListener("load", () => {
     createStitchButtons();
     resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
 });
+
+window.addEventListener("resize", resizeCanvas);
