@@ -173,7 +173,7 @@ body {
 .stitch-palette {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(37px, 1fr));
-    gap: 0.8rem;
+    gap: 1.0rem;
     width: 100%;
     max-width: 500px;
     padding: 0 1rem;
