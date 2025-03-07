@@ -23,6 +23,7 @@ const zoomIn = document.getElementById("zoomIn");
 const zoomOut = document.getElementById("zoomOut");
 const resetView = document.getElementById("resetView");
 const patternLog = document.getElementById("patternLog");
+const deleteLastStitchBtn = document.getElementById("deleteLastStitchBtn");
 
 // Variables de estado
 let selectedStitch = null;
@@ -200,6 +201,18 @@ function resetViewHandler(e) {
     drawPattern();
 }
 
+// Función para borrar el último punto
+function deleteLastStitch() {
+    if (patternSequence.length > 0) {
+        patternSequence.pop(); // Eliminar el último punto
+        updatePatternLog(); // Actualizar el registro de patrones
+        drawPattern(); // Redibujar el patrón en el lienzo
+    }
+}
+
+// Asignar la función al botón de borrar último punto
+deleteLastStitchBtn.addEventListener("click", deleteLastStitch);
+
 // Actualizar valores de configuración
 guideLines.addEventListener("input", () => {
     guideLinesValue.textContent = guideLines.value;
@@ -227,6 +240,8 @@ window.addEventListener("click", (e) => {
         helpImageContainer.style.display = "none"; // Ocultar la imagen
     }
 });
+
+
 
 // Inicialización
 window.addEventListener("load", () => {
