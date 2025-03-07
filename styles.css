@@ -258,3 +258,22 @@ body {
         display: block; /* Mostrar el botón de ayuda en pantallas pequeñas */
     }
 }
+
+/* Estilos para el botón de borrar último punto */
+#deleteLastStitchBtn {
+    background: var(--primary-color);
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    min-width: 40px;
+    min-height: 40px;
+    margin-top: 0.5rem; /* Espacio entre botones */
+}
+
+#deleteLastStitchBtn:hover {
+    background-color: var(--secondary-color);
+}
