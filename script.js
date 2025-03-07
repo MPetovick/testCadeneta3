@@ -13,6 +13,7 @@ const stitches = [
 const stitchPalette = document.getElementById("stitchPalette");
 const stitchHelpBtn = document.getElementById("stitchHelpBtn");
 const helpImageContainer = document.querySelector(".help-image-container");
+const deleteLastStitchBtn = document.getElementById("deleteLastStitchBtn");
 const canvas = document.getElementById("patternCanvas");
 const ctx = canvas.getContext("2d");
 const guideLines = document.getElementById("guideLines");
@@ -23,7 +24,6 @@ const zoomIn = document.getElementById("zoomIn");
 const zoomOut = document.getElementById("zoomOut");
 const resetView = document.getElementById("resetView");
 const patternLog = document.getElementById("patternLog");
-const deleteLastStitchBtn = document.getElementById("deleteLastStitchBtn");
 
 // Variables de estado
 let selectedStitch = null;
@@ -201,18 +201,6 @@ function resetViewHandler(e) {
     drawPattern();
 }
 
-// Función para borrar el último punto
-function deleteLastStitch() {
-    if (patternSequence.length > 0) {
-        patternSequence.pop(); // Eliminar el último punto
-        updatePatternLog(); // Actualizar el registro de patrones
-        drawPattern(); // Redibujar el patrón en el lienzo
-    }
-}
-
-// Asignar la función al botón de borrar último punto
-deleteLastStitchBtn.addEventListener("click", deleteLastStitch);
-
 // Actualizar valores de configuración
 guideLines.addEventListener("input", () => {
     guideLinesValue.textContent = guideLines.value;
@@ -241,7 +229,17 @@ window.addEventListener("click", (e) => {
     }
 });
 
+// Función para borrar el último punto
+function deleteLastStitch() {
+    if (patternSequence.length > 0) {
+        patternSequence.pop(); // Eliminar el último punto
+        updatePatternLog(); // Actualizar el registro de patrones
+        drawPattern(); // Redibujar el patrón en el lienzo
+    }
+}
 
+// Asignar la función al botón de borrar último punto
+deleteLastStitchBtn.addEventListener("click", deleteLastStitch);
 
 // Inicialización
 window.addEventListener("load", () => {
