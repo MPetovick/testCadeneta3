@@ -175,7 +175,7 @@ body {
     grid-template-columns: repeat(auto-fit, minmax(37px, 1fr));
     gap: 0.8rem;
     width: 100%;
-    max-width: 400px;
+    max-width: 500px;
     padding: 0 1rem;
 }
 
