@@ -14,6 +14,7 @@
             <i class="fas fa-crop-alt"></i>
             <h1>LATROCA</h1>
         </div>
+        <button class="theme-toggle" aria-label="Cambiar tema"><i class="fas fa-moon"></i></button>
     </nav>
 
     <main class="editor-container">
@@ -21,9 +22,25 @@
             <div id="grid" class="grid-view">
                 <canvas id="patternCanvas"></canvas>
                 <div class="zoom-controls">
-                    <button id="zoomIn" title="Zoom In (+)"><i class="fas fa-search-plus"></i></button>
-                    <button id="zoomOut" title="Zoom Out (-)"><i class="fas fa-search-minus"></i></button>
-                    <button id="resetView"><i class="fas fa-expand-arrows-alt"></i></button>
+                    <div class="zoom-group">
+                        <button id="zoomIn" aria-label="Aumentar zoom" title="Zoom In (+)"><i class="fas fa-search-plus"></i></button>
+                        <button id="zoomOut" aria-label="Reducir zoom" title="Zoom Out (-)"><i class="fas fa-search-minus"></i></button>
+                        <button id="resetView" aria-label="Restablecer vista" title="Restablecer Vista"><i class="fas fa-expand-arrows-alt"></i></button>
+                    </div>
+                    <div class="project-group">
+                        <button id="undoBtn" aria-label="Deshacer" title="Deshacer"><i class="fas fa-undo"></i></button>
+                        <button id="redoBtn" aria-label="Rehacer" title="Rehacer"><i class="fas fa-redo"></i></button>
+                        <button id="newProjectBtn" aria-label="Nuevo proyecto" title="Nuevo Proyecto"><i class="fas fa-file"></i></button>
+                        <button id="saveProjectBtn" aria-label="Guardar proyecto" title="Guardar Proyecto"><i class="fas fa-save"></i></button>
+                        <select id="savedProjectsList" aria-label="Proyectos guardados" title="Proyectos Guardados">
+                            <option value="" disabled selected>Selecciona un proyecto</option>
+                        </select>
+                        <button id="loadSelectedProjectBtn" aria-label="Cargar proyecto seleccionado" title="Cargar Proyecto Seleccionado">
+                            <i class="fas fa-upload"></i>
+                        </button>
+                        <button id="deleteProjectBtn" aria-label="Eliminar proyecto" title="Eliminar Proyecto"><i class="fas fa-trash"></i></button>
+                        <button id="downloadPatternBtn" aria-label="Descargar patrón" title="Descargar Patrón"><i class="fas fa-download"></i></button>
+                    </div>
                     <div class="config-section">
                         <label for="guideLines" title="Divisiones Iniciales"><i class="fas fa-drafting-compass"></i></label>
                         <input type="range" id="guideLines" min="4" max="24" value="8">
@@ -32,28 +49,29 @@
                         <input type="range" id="ringSpacing" min="30" max="80" value="50">
                         <span id="ringSpacingValue">50px</span>
                     </div>
+                    <button id="deleteLastStitchBtn" class="help-btn" aria-label="Borrar último punto" title="Borrar último punto">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    <button id="stitchHelpBtn" class="help-btn" aria-label="Guía de símbolos" title="Guía de símbolos">
+                        <i class="fas fa-question-circle"></i>
+                    </button>
                 </div>
             </div>
             <div class="log-panel">
-                <textarea id="patternLog" placeholder="Secuencia de puntos por anillo..." readonly></textarea>
+                <textarea id="patternLog" aria-label="Registro de secuencia de puntos por anillo" placeholder="Secuencia de puntos por anillo..." readonly></textarea>
             </div>
         </div>
 
         <div class="stitch-calculator">
-            <div class="stitch-palette" id="stitchPalette">
-                <!-- Los botones se generan dinámicamente en JS -->
+            <div class="stitch-palette" id="stitchPalette"></div>
+            <div class="custom-stitch-form">
+                <input type="text" id="customSymbol" placeholder="Símbolo" maxlength="2">
+                <input type="text" id="customName" placeholder="Nombre">
+                <button id="addCustomStitch" aria-label="Añadir punto personalizado" title="Añadir Punto"><i class="fas fa-plus"></i></button>
             </div>
-            <!-- Contenedor para la imagen de ayuda -->
             <div class="help-image-container">
                 <img src="src/crochet.jpg" alt="Leyenda de puntos de crochet">
             </div>
-            <button id="stitchHelpBtn" class="help-btn" title="Guía de símbolos">
-                <i class="fas fa-question-circle"></i>
-            </button>
-            <!-- Botón para borrar el último punto -->
-            <button id="deleteLastStitchBtn" class="help-btn" title="Borrar último punto">
-                <i class="fas fa-undo"></i>
-            </button>
         </div>
     </main>
 
