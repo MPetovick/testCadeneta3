@@ -1,5 +1,5 @@
-// Definir los símbolos de crochet y sus descripciones
 const stitches = [
+    { symbol: "-", name: "Punt pla", description: "Punt pla" },
     { symbol: "○", name: "Cadeneta (ch)", description: "Punto de cadena" },
     { symbol: "●", name: "Punto deslizado (sl st)", description: "Punto deslizado" },
     { symbol: "✚", name: "Punto bajo (sc)", description: "Punto bajo o medio punto" },
@@ -24,6 +24,16 @@ const zoomIn = document.getElementById("zoomIn");
 const zoomOut = document.getElementById("zoomOut");
 const resetView = document.getElementById("resetView");
 const patternLog = document.getElementById("patternLog");
+const newProjectBtn = document.getElementById("newProjectBtn");
+const saveProjectBtn = document.getElementById("saveProjectBtn");
+const deleteProjectBtn = document.getElementById("deleteProjectBtn");
+const downloadPatternBtn = document.getElementById("downloadPatternBtn");
+const savedProjectsList = document.getElementById("savedProjectsList");
+const loadSelectedProjectBtn = document.getElementById("loadSelectedProjectBtn");
+const undoBtn = document.getElementById("undoBtn");
+const redoBtn = document.getElementById("redoBtn");
+const addCustomStitch = document.getElementById("addCustomStitch");
+const themeToggle = document.querySelector(".theme-toggle");
 
 // Variables de estado
 let selectedStitch = null;
@@ -33,9 +43,14 @@ let offsetY = 0;
 let isDragging = false;
 let startX, startY;
 let patternSequence = [];
+let undoStack = [];
+let redoStack = [];
+let needsRedraw = true;
+let cachedPositions = [];
 
 // Generar botones de la paleta de puntadas
 function createStitchButtons() {
+    stitchPalette.innerHTML = "";
     stitches.forEach(stitch => {
         const button = document.createElement("button");
         button.className = "stitch-btn";
@@ -49,14 +64,14 @@ function createStitchButtons() {
 
 // Seleccionar un punto y añadirlo a la secuencia
 function selectStitch(stitch, button) {
+    saveState();
     selectedStitch = stitch;
     document.querySelectorAll(".stitch-btn").forEach(btn => btn.classList.remove("active"));
     button.classList.add("active");
-    
     const stitchCount = patternSequence.length + 1;
     patternSequence.push({ ...stitch, position: stitchCount });
     updatePatternLog();
-    drawPattern();
+    updatePositions();
 }
 
 // Actualizar el log de la secuencia por anillos
@@ -64,7 +79,6 @@ function updatePatternLog() {
     const divisions = parseInt(guideLines.value);
     const rings = Math.ceil(patternSequence.length / divisions);
     let logText = "";
-
     for (let ring = 0; ring < rings; ring++) {
         const startIdx = ring * divisions;
         const endIdx = Math.min(startIdx + divisions, patternSequence.length);
@@ -72,7 +86,6 @@ function updatePatternLog() {
         const ringText = ringStitches.map(s => `${s.symbol}`).join(" ");
         logText += `Anillo ${ring + 1}: ${ringText || "Vacío"}\n`;
     }
-
     patternLog.value = logText.trim();
     patternLog.scrollTop = patternLog.scrollHeight;
 }
@@ -81,10 +94,27 @@ function updatePatternLog() {
 function resizeCanvas() {
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
-    drawPattern();
+    requestRedraw();
+}
+
+function updatePositions() {
+    const divisions = parseInt(guideLines.value);
+    const spacing = parseInt(ringSpacing.value);
+    cachedPositions = patternSequence.map((stitch, index) => {
+        const ring = Math.floor(index / divisions) + 1;
+        const positionInRing = index % divisions;
+        const angle = (positionInRing / divisions) * Math.PI * 2;
+        return {
+            x: Math.cos(angle) * (ring * spacing),
+            y: Math.sin(angle) * (ring * spacing),
+            symbol: stitch.symbol
+        };
+    });
+    requestRedraw();
 }
 
 function drawPattern() {
+    if (!needsRedraw) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
     ctx.translate(offsetX + canvas.width / 2, offsetY + canvas.height / 2);
@@ -94,9 +124,9 @@ function drawPattern() {
     const centerY = 0;
     const divisions = parseInt(guideLines.value);
     const spacing = parseInt(ringSpacing.value);
-    const totalRings = Math.max(1, Math.ceil(patternSequence.length / divisions)); // Al menos 1 anillo
+    const totalRings = Math.max(1, Math.ceil(patternSequence.length / divisions));
 
-    // Dibujar anillos según la cantidad de puntos
+    // Dibujar anillos
     for (let r = 1; r <= totalRings; r++) {
         ctx.beginPath();
         ctx.arc(centerX, centerY, r * spacing, 0, Math.PI * 2);
@@ -105,7 +135,15 @@ function drawPattern() {
         ctx.stroke();
     }
 
-    // Dibujar líneas guía hasta el anillo más externo
+    // Resaltar anillo activo
+    const activeRing = Math.max(1, Math.floor(patternSequence.length / divisions));
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, activeRing * spacing, 0, Math.PI * 2);
+    ctx.strokeStyle = "var(--secondary-color)";
+    ctx.lineWidth = 2 / zoomLevel;
+    ctx.stroke();
+
+    // Dibujar líneas guía
     for (let i = 0; i < divisions; i++) {
         const angle = (i / divisions) * Math.PI * 2;
         ctx.beginPath();
@@ -116,32 +154,29 @@ function drawPattern() {
         ctx.stroke();
     }
 
-    // Dibujar puntos de crochet en el patrón
-    patternSequence.forEach((stitch, index) => {
-        const ring = Math.floor(index / divisions) + 1;
-        const positionInRing = index % divisions;
-        const angle = (positionInRing / divisions) * Math.PI * 2;
-        const x = centerX + Math.cos(angle) * (ring * spacing);
-        const y = centerY + Math.sin(angle) * (ring * spacing);
-
+    // Dibujar puntos desde caché
+    cachedPositions.forEach(pos => {
         ctx.font = `${20 / zoomLevel}px Arial`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillStyle = "#2c3e50";
-        ctx.fillText(stitch.symbol, x, y);
+        ctx.fillText(pos.symbol, pos.x, pos.y);
     });
 
     ctx.restore();
+    needsRedraw = false;
+}
+
+function requestRedraw() {
+    needsRedraw = true;
+    requestAnimationFrame(drawPattern);
 }
 
 // Interacción con el canvas
 canvas.addEventListener("mousedown", startDragging);
-canvas.addEventListener("mousemove", drag);
 canvas.addEventListener("mouseup", stopDragging);
 canvas.addEventListener("mouseleave", stopDragging);
-
 canvas.addEventListener("touchstart", startDragging, { passive: false });
-canvas.addEventListener("touchmove", drag, { passive: false });
 canvas.addEventListener("touchend", stopDragging);
 canvas.addEventListener("touchcancel", stopDragging);
 
@@ -158,7 +193,15 @@ function startDragging(e) {
     isDragging = true;
 }
 
-function drag(e) {
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+const debouncedDrag = debounce((e) => {
     if (!isDragging) return;
     e.preventDefault();
     if (e.type === "touchmove") {
@@ -169,8 +212,11 @@ function drag(e) {
         offsetX = e.clientX - startX;
         offsetY = e.clientY - startY;
     }
-    drawPattern();
-}
+    requestRedraw();
+}, 16);
+
+canvas.addEventListener("mousemove", debouncedDrag);
+canvas.addEventListener("touchmove", debouncedDrag, { passive: false });
 
 function stopDragging() {
     isDragging = false;
@@ -184,13 +230,13 @@ resetView.addEventListener("click", resetViewHandler);
 function zoomInHandler(e) {
     e.preventDefault();
     zoomLevel = Math.min(zoomLevel + 0.2, 3);
-    drawPattern();
+    requestRedraw();
 }
 
 function zoomOutHandler(e) {
     e.preventDefault();
     zoomLevel = Math.max(zoomLevel - 0.2, 0.5);
-    drawPattern();
+    requestRedraw();
 }
 
 function resetViewHandler(e) {
@@ -198,53 +244,179 @@ function resetViewHandler(e) {
     zoomLevel = 1;
     offsetX = 0;
     offsetY = 0;
-    drawPattern();
+    requestRedraw();
 }
 
 // Actualizar valores de configuración
 guideLines.addEventListener("input", () => {
     guideLinesValue.textContent = guideLines.value;
     updatePatternLog();
-    drawPattern();
+    updatePositions();
 });
 
 ringSpacing.addEventListener("input", () => {
     ringSpacingValue.textContent = `${ringSpacing.value}px`;
-    drawPattern();
+    updatePositions();
 });
 
-// Mostrar/ocultar la imagen en pantallas pequeñas
+// Mostrar/ocultar la imagen de ayuda
 stitchHelpBtn.addEventListener("click", () => {
-    if (helpImageContainer.style.display === "none" || helpImageContainer.style.display === "") {
-        helpImageContainer.style.display = "block"; // Mostrar la imagen
-    } else {
-        helpImageContainer.style.display = "none"; // Ocultar la imagen
-    }
+    helpImageContainer.style.display = helpImageContainer.style.display === "none" || !helpImageContainer.style.display ? "block" : "none";
 });
 
-// Ocultar la imagen si se hace clic fuera de ella
 window.addEventListener("click", (e) => {
     if (!helpImageContainer.contains(e.target) && e.target !== stitchHelpBtn) {
-        helpImageContainer.style.display = "none"; // Ocultar la imagen
+        helpImageContainer.style.display = "none";
     }
 });
 
-// Función para borrar el último punto
+// Funciones de edición
 function deleteLastStitch() {
     if (patternSequence.length > 0) {
-        patternSequence.pop(); // Eliminar el último punto
-        updatePatternLog(); // Actualizar el registro de patrones
-        drawPattern(); // Redibujar el patrón en el lienzo
+        saveState();
+        patternSequence.pop();
+        updatePatternLog();
+        updatePositions();
     }
 }
 
-// Asignar la función al botón de borrar último punto
 deleteLastStitchBtn.addEventListener("click", deleteLastStitch);
+
+function saveState() {
+    undoStack.push(JSON.stringify(patternSequence));
+    redoStack = [];
+}
+
+function undo() {
+    if (undoStack.length > 0) {
+        redoStack.push(JSON.stringify(patternSequence));
+        patternSequence = JSON.parse(undoStack.pop());
+        updatePatternLog();
+        updatePositions();
+    }
+}
+
+function redo() {
+    if (redoStack.length > 0) {
+        undoStack.push(JSON.stringify(patternSequence));
+        patternSequence = JSON.parse(redoStack.pop());
+        updatePatternLog();
+        updatePositions();
+    }
+}
+
+undoBtn.addEventListener("click", undo);
+redoBtn.addEventListener("click", redo);
+
+// Funciones de proyecto
+function newProject() {
+    saveState();
+    patternSequence = [];
+    patternLog.value = "";
+    updatePositions();
+}
+
+function saveProject() {
+    const patternText = patternSequence.map(stitch => stitch.symbol).join(" ");
+    const fileName = prompt("Ingresa un nombre para el archivo:", "patron_crochet");
+    if (fileName) {
+        if (localStorage.getItem(fileName)) {
+            if (!confirm(`El proyecto "${fileName}" ya existe. ¿Deseas sobrescribirlo?`)) return;
+        }
+        localStorage.setItem(fileName, patternText);
+        alert(`Proyecto "${fileName}" guardado correctamente.`);
+        updateSavedProjectsList();
+    }
+}
+
+function updateSavedProjectsList() {
+    savedProjectsList.innerHTML = '<option value="" disabled selected>Selecciona un proyecto</option>';
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const option = document.createElement("option");
+        option.value = key;
+        option.textContent = key;
+        savedProjectsList.appendChild(option);
+    }
+}
+
+function loadSelectedProject() {
+    const selectedProject = savedProjectsList.value;
+    if (selectedProject) {
+        const patternText = localStorage.getItem(selectedProject);
+        if (patternText) {
+            saveState();
+            const symbols = patternText.split(" ");
+            patternSequence = symbols.map((symbol, idx) => {
+                const stitch = stitches.find(s => s.symbol === symbol) || { symbol, name: "Personalizado", description: "Personalizado" };
+                return { ...stitch, position: idx + 1 };
+            });
+            updatePatternLog();
+            updatePositions();
+            alert(`Proyecto "${selectedProject}" cargado correctamente.`);
+        }
+    } else {
+        alert("Por favor, selecciona un proyecto de la lista.");
+    }
+}
+
+function deleteSelectedProject() {
+    const selectedProject = savedProjectsList.value;
+    if (selectedProject) {
+        if (confirm(`¿Estás seguro de que quieres eliminar el proyecto "${selectedProject}"?`)) {
+            localStorage.removeItem(selectedProject);
+            updateSavedProjectsList();
+            alert(`Proyecto "${selectedProject}" eliminado correctamente.`);
+        }
+    } else {
+        alert("Por favor, selecciona un proyecto de la lista.");
+    }
+}
+
+function downloadPattern() {
+    if (patternSequence.length === 0) {
+        alert("No hay ningún patrón para descargar.");
+        return;
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const imgData = canvas.toDataURL("image/png");
+    doc.text("Patrón de Crochet - RadialStitch Pro", 10, 10);
+    doc.addImage(imgData, "PNG", 10, 20, 180, 100);
+    doc.text("Secuencia de puntos:\n" + patternLog.value, 10, 130);
+    doc.save("patron_crochet.pdf");
+}
+
+newProjectBtn.addEventListener("click", newProject);
+saveProjectBtn.addEventListener("click", saveProject);
+deleteProjectBtn.addEventListener("click", deleteSelectedProject);
+downloadPatternBtn.addEventListener("click", downloadPattern);
+loadSelectedProjectBtn.addEventListener("click", loadSelectedProject);
+
+// Puntos personalizados
+addCustomStitch.addEventListener("click", () => {
+    const symbol = document.getElementById("customSymbol").value;
+    const name = document.getElementById("customName").value;
+    if (symbol && name) {
+        stitches.push({ symbol, name, description: name });
+        createStitchButtons();
+        document.getElementById("customSymbol").value = "";
+        document.getElementById("customName").value = "";
+    }
+});
+
+// Modo oscuro
+themeToggle.addEventListener("click", () => {
+    document.body.classList.toggle("dark-mode");
+    themeToggle.innerHTML = `<i class="fas fa-${document.body.classList.contains("dark-mode") ? 'sun' : 'moon'}"></i>`;
+    requestRedraw();
+});
 
 // Inicialización
 window.addEventListener("load", () => {
     createStitchButtons();
     resizeCanvas();
+    updateSavedProjectsList();
 });
 
 window.addEventListener("resize", resizeCanvas);
