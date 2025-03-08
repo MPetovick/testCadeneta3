@@ -7,6 +7,24 @@
     --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary-color: #3498db;
+        --secondary-color: #2c3e50;
+        --background-color: #1a1a1a;
+        --text-color: #e0e0e0;
+        --toolbar-bg: #2d2d2d;
+    }
+}
+
+body.dark-mode {
+    --primary-color: #3498db;
+    --secondary-color: #2c3e50;
+    --background-color: #1a1a1a;
+    --text-color: #e0e0e0;
+    --toolbar-bg: #2d2d2d;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -41,10 +59,21 @@ body {
     gap: 0.5rem;
 }
 
+.theme-toggle {
+    position: absolute;
+    top: 0.5rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
 .editor-container {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    min-height: 90vh;
     padding-top: 60px;
 }
 
@@ -72,17 +101,32 @@ body {
     position: absolute;
     bottom: 0.5rem;
     right: 0.5rem;
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
     background: rgba(255, 255, 255, 0.9);
-    padding: 0.5rem;
+    padding: 0.75rem;
     border-radius: 8px;
     box-shadow: var(--shadow);
-    align-items: center;
 }
 
-.zoom-controls button {
+.zoom-group, .project-group {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.25rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.config-section {
+    grid-column: span 2;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.zoom-controls button, .project-group button {
     min-width: 40px;
     min-height: 40px;
     font-size: 1.1rem;
@@ -90,18 +134,26 @@ body {
     border: 1px solid var(--primary-color);
     border-radius: 6px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.zoom-controls button:hover {
+.zoom-controls button:hover, .project-group button:hover {
     background-color: var(--secondary-color);
     color: white;
 }
 
-.config-section {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+#stitchHelpBtn, #deleteLastStitchBtn {
+    background: var(--primary-color);
+    border: none;
+    color: white;
+    transition: background-color 0.2s ease;
+}
+
+#stitchHelpBtn:hover, #deleteLastStitchBtn:hover {
+    background-color: var(--secondary-color);
 }
 
 .config-section label {
@@ -181,7 +233,6 @@ body {
 
 .stitch-btn {
     width: 100%;
-    min-width: 50px;
     min-height: 50px;
     aspect-ratio: 1;
     display: flex;
@@ -192,7 +243,7 @@ body {
     border-radius: 8px;
     cursor: pointer;
     background: var(--background-color);
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
     box-shadow: var(--shadow);
 }
 
@@ -207,47 +258,36 @@ body {
     background-color: rgba(52, 152, 219, 0.2);
 }
 
-.help-btn {
-    background: var(--primary-color);
-    border: none;
-    color: white;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    box-shadow: var(--shadow);
-    min-width: 40px;
-    min-height: 40px;
+.custom-stitch-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
 }
 
-.help-btn:hover {
+.custom-stitch-form input {
+    padding: 0.5rem;
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+}
+
+.custom-stitch-form button {
+    min-width: 40px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.custom-stitch-form button:hover {
     background-color: var(--secondary-color);
 }
 
-/* Estilos para el botón de borrar último punto */
-#deleteLastStitchBtn {
-    background: var(--primary-color);
-    border: none;
-    color: white;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    box-shadow: var(--shadow);
-    min-width: 40px;
-    min-height: 40px;
-    margin-top: 0.5rem; /* Espacio entre botones */
-}
-
-#deleteLastStitchBtn:hover {
-    background-color: var(--secondary-color);
-}
-
-/* Estilos para el contenedor de la imagen de ayuda */
 .help-image-container {
-    display: none; /* Oculto por defecto */
+    display: none;
     position: fixed;
-    top: 60px; /* Debajo de la barra de navegación */
+    top: 60px;
     right: 20px;
     background-color: var(--toolbar-bg);
     padding: 15px;
@@ -264,16 +304,8 @@ body {
     border-radius: 4px;
 }
 
-/* Mostrar la imagen en pantallas grandes */
 @media (min-width: 768px) {
     .help-image-container {
-        display: block; /* Mostrar la imagen en pantallas grandes */
-    }
-}
-
-/* Estilos para el botón de ayuda en pantallas pequeñas */
-@media (max-width: 767px) {
-    .stitchHelpBtn {
-        display: block; /* Mostrar el botón de ayuda en pantallas pequeñas */
+        display: block;
     }
 }
