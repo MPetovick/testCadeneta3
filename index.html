@@ -3,79 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Editor profesional de patrones de crochet radiales con símbolos estandarizados">
-    <title>RadialStitch Pro - Editor de Patrones de Crochet</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Burex Trend Caster v3.5</title>
+    <!-- Dependencias CDN actualizadas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <!-- Enlace al archivo CSS -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="navbar-brand">
-            <i class="fas fa-crop-alt"></i>
-            <h1>LATROCA</h1>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">B</div>
+                <h1>Burex Trend Caster v3.5</h1>
+            </div>
+            <p class="subtitle">Predicciones de criptomonedas basadas en el <span class="fibonacci-highlight">Número Áureo (φ = 1.618)</span>, niveles de Fibonacci, RSI y volatilidad</p>
+            <button class="theme-toggle" aria-label="Cambiar entre tema claro y oscuro">
+                <i class="fas fa-moon"></i>
+            </button>
+            <div class="golden-spiral">
+                <svg viewBox="0 0 100 100">
+                    <path d="M50,0 C77.614,0 100,22.386 100,50 C100,77.614 77.614,100 50,100 C22.386,100 0,77.614 0,50 C0,22.386 22.386,0 50,0 Z" fill="none" stroke="#000000" stroke-width="2"/>
+                    <path d="M50,10 C66.568,10 80,23.432 80,40 C80,56.568 66.568,70 50,70 C33.432,70 20,56.568 20,40 C20,23.432 33.432,10 50,10 Z" fill="none" stroke="#000000" stroke-width="2"/>
+                </svg>
+            </div>
+        </header>
+        
+        <div class="prediction-highlight">
+            <div class="prediction-title">PREDICCIÓN PARA <span id="current-timeframe">7D</span> (<span id="currency-name">Bitcoin</span>)</div>
+            <div class="prediction-value" id="prediction-price">$--</div>
+            <div class="confidence-indicator" id="confidence-level">Confianza: --%</div>
         </div>
-        <button class="theme-toggle" aria-label="Cambiar tema"><i class="fas fa-moon"></i></button>
-    </nav>
-
-    <main class="editor-container">
-        <div class="canvas-wrapper">
-            <div id="grid" class="grid-view">
-                <canvas id="patternCanvas"></canvas>
-                <div class="zoom-controls">
-                    <div class="zoom-group">
-                        <button id="zoomIn" aria-label="Aumentar zoom" title="Zoom In (+)"><i class="fas fa-search-plus"></i></button>
-                        <button id="zoomOut" aria-label="Reducir zoom" title="Zoom Out (-)"><i class="fas fa-search-minus"></i></button>
-                        <button id="resetView" aria-label="Restablecer vista" title="Restablecer Vista"><i class="fas fa-expand-arrows-alt"></i></button>
-                    </div>
-                    <div class="project-group">
-                        <button id="undoBtn" aria-label="Deshacer" title="Deshacer"><i class="fas fa-undo"></i></button>
-                        <button id="redoBtn" aria-label="Rehacer" title="Rehacer"><i class="fas fa-redo"></i></button>
-                        <button id="newProjectBtn" aria-label="Nuevo proyecto" title="Nuevo Proyecto"><i class="fas fa-file"></i></button>
-                        <button id="saveProjectBtn" aria-label="Guardar proyecto" title="Guardar Proyecto"><i class="fas fa-save"></i></button>
-                        <select id="savedProjectsList" aria-label="Proyectos guardados" title="Proyectos Guardados">
-                            <option value="" disabled selected>Selecciona un proyecto</option>
+        
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-chart-line"></i> Análisis de <span id="currency-name-chart">Bitcoin</span></h2>
+                    <div>
+                        <select id="currency-selector" aria-label="Seleccionar criptomoneda">
+                            <option value="BTC">Bitcoin (BTC)</option>
+                            <option value="ETH">Ethereum (ETH)</option>
+                            <option value="XRP">Ripple (XRP)</option>
                         </select>
-                        <button id="loadSelectedProjectBtn" aria-label="Cargar proyecto seleccionado" title="Cargar Proyecto Seleccionado">
-                            <i class="fas fa-upload"></i>
+                        <span id="data-points">-- puntos</span>
+                        <button class="refresh-btn" aria-label="Actualizar datos de precios ahora">
+                            <i class="fas fa-sync" aria-hidden="true"></i> Actualizar
                         </button>
-                        <button id="deleteProjectBtn" aria-label="Eliminar proyecto" title="Eliminar Proyecto"><i class="fas fa-trash"></i></button>
-                        <button id="downloadPatternBtn" aria-label="Descargar patrón" title="Descargar Patrón"><i class="fas fa-download"></i></button>
+                        <button class="export-btn" aria-label="Exportar datos como CSV">
+                            <i class="fas fa-download" aria-hidden="true"></i> Exportar
+                        </button>
                     </div>
-                    <div class="config-section">
-                        <label for="guideLines" title="Divisiones Iniciales"><i class="fas fa-drafting-compass"></i></label>
-                        <input type="range" id="guideLines" min="4" max="24" value="8">
-                        <span id="guideLinesValue">8</span>
-                        <label for="ringSpacing" title="Espaciado de Anillos"><i class="fas fa-circle-notch"></i></label>
-                        <input type="range" id="ringSpacing" min="30" max="80" value="50">
-                        <span id="ringSpacingValue">50px</span>
-                    </div>
-                    <button id="deleteLastStitchBtn" class="help-btn" aria-label="Borrar último punto" title="Borrar último punto">
-                        <i class="fas fa-undo"></i>
-                    </button>
-                    <button id="stitchHelpBtn" class="help-btn" aria-label="Guía de símbolos" title="Guía de símbolos">
-                        <i class="fas fa-question-circle"></i>
-                    </button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="price-chart" aria-label="Gráfico de precios de criptomoneda"></canvas>
+                    <div class="chart-error" id="chart-error" role="alert"></div>
+                </div>
+                <div class="timeframe-selector">
+                    <button class="timeframe-btn active" data-timeframe="7" aria-label="Mostrar datos de los últimos 7 días">7D</button>
+                    <button class="timeframe-btn" data-timeframe="15" aria-label="Mostrar datos de los últimos 15 días">15D</button>
+                    <button class="timeframe-btn" data-timeframe="30" aria-label="Mostrar datos de los últimos 30 días">30D</button>
+                    <button class="timeframe-btn" data-timeframe="90" aria-label="Mostrar datos de los últimos 90 días">90D</button>
+                    <button class="timeframe-btn" data-timeframe="180" aria-label="Mostrar datos de los últimos 180 días">180D</button>
                 </div>
             </div>
-            <div class="log-panel">
-                <textarea id="patternLog" aria-label="Registro de secuencia de puntos por anillo" placeholder="Secuencia de puntos por anillo..." readonly></textarea>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-calculator"></i> Detalles de Predicción</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">PRECIO ACTUAL</div>
+                        <div class="stat-value" id="current-price">$--</div>
+                        <div class="stat-label" id="price-change">--% (24h)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">PRECISIÓN HISTÓRICA</div>
+                        <div class="stat-value" id="accuracy-rate">--%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" id="accuracy-bar-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">NIVELES FIBONACCI</div>
+                        <div class="stat-value" id="fib-levels">0/5</div>
+                        <div class="stat-label">detectados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">IMPULSO ÁUREO</div>
+                        <div class="stat-value" id="golden-momentum">--%</div>
+                        <div class="stat-label">φ = 1.618</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">RSI (14 DÍAS)</div>
+                        <div class="stat-value" id="rsi-value">--</div>
+                        <div class="stat-label">Índice de Fuerza Relativa</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">VOLATILIDAD</div>
+                        <div class="stat-value" id="volatility">--%</div>
+                        <div class="stat-label">Desviación Estándar (30D)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">TENDENCIA EMA</div>
+                        <div class="stat-value" id="ema-trend">--</div>
+                        <div class="stat-label">50/200 días</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">FACTOR ÁUREO</div>
+                        <div class="stat-value" id="golden-factor">1.618</div>
+                        <div class="stat-label">φ</div>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div class="stitch-calculator">
-            <div class="stitch-palette" id="stitchPalette"></div>
-            <div class="custom-stitch-form">
-                <input type="text" id="customSymbol" placeholder="Símbolo" maxlength="2">
-                <input type="text" id="customName" placeholder="Nombre">
-                <button id="addCustomStitch" aria-label="Añadir punto personalizado" title="Añadir Punto"><i class="fas fa-plus"></i></button>
-            </div>
-            <div class="help-image-container">
-                <img src="src/crochet.jpg" alt="Leyenda de puntos de crochet">
-            </div>
+        
+        <div class="fibonacci-explanation">
+            <h3 class="explanation-title">Cómo funciona Burex Trend Caster v3.5</h3>
+            <p class="explanation-content">
+                Combinamos el <span class="fibonacci-highlight">Número Áureo (φ ≈ 1.618)</span>, niveles de retroceso y extensión de Fibonacci (<span class="fibonacci-highlight">23.6%, 38.2%, 50%, 61.8%, 78.6%, 1.272, 1.414, 1.618, 2.0, 2.618</span>), el Índice de Fuerza Relativa (RSI) y la volatilidad reciente para predecir precios de criptomonedas. 
+                El sistema analiza datos históricos mediante regresión lineal ponderada, identifica niveles clave de soporte y resistencia mediante clustering estadístico, y aplica un modelo que ajusta el impulso reciente, los niveles de Fibonacci detectados, la tendencia EMA y las condiciones de mercado. 
+                Incluye un factor de confianza basado en la precisión histórica, la estabilidad del mercado y la convergencia de indicadores.
+            </p>
         </div>
-    </main>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    </div>
+    
+    <div class="notification" id="notification" role="alert">
+        <div class="notification-icon">⚠️</div>
+        <div>
+            <div id="notification-message">Cargando datos...</div>
+            <button class="close-btn" aria-label="Cerrar notificación">×</button>
+        </div>
+    </div>
+    
+    <div class="loading-overlay" id="loading-overlay" role="status" aria-live="polite">
+        <div>
+            <div class="loader"></div>
+            <div class="loading-text" id="loading-text">Conectando con CryptoCompare API...</div>
+            <progress value="0" max="100" id="loading-progress" aria-label="Progreso de carga"></progress>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Burex Trend Caster v3.5 - Predicciones de criptomonedas con Número Áureo, Fibonacci y RSI</p>
+        <p>© 2025 Todos los derechos reservados | Datos actualizados cada 5 minutos</p>
+    </footer>
+    
+    <!-- Enlace al archivo JavaScript -->
     <script src="script.js"></script>
 </body>
 </html>
