@@ -18,9 +18,9 @@
   --ema-bullish: #10b981;
   --ema-bearish: #ef4444;
   --chart-bg: #f9fafb;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.15);
 }
 
 * {
@@ -76,7 +76,7 @@ header {
 .logo-icon {
   width: 40px;
   height: 40px;
-  background:(linear-gradient(135deg, #f7931a, #f59e0b);
+  background: linear-gradient(135deg, #f7931a, #f59e0b);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -324,7 +324,7 @@ h1 {
 .loader {
   width: 40px;
   height: 40px;
-  border: 4px solid rgba(255, 255, 255, 0.2);
+  border: 4px solid rgba(255,255,255,0.2);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
