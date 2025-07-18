@@ -1,159 +1,122 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Burex Trend Caster v3.5</title>
-    <!-- Dependencias CDN actualizadas -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-    <!-- Enlace al archivo CSS -->
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Burex Bitcoin Oracle v4.1</title>
+  <!-- Optimized dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo">
-                <div class="logo-icon">B</div>
-                <h1>Burex Trend Caster v3.5</h1>
-            </div>
-            <p class="subtitle">Predicciones de criptomonedas basadas en el <span class="fibonacci-highlight">Número Áureo (φ = 1.618)</span>, niveles de Fibonacci, RSI y volatilidad</p>
-            <button class="theme-toggle" aria-label="Cambiar entre tema claro y oscuro">
-                <i class="fas fa-moon"></i>
-            </button>
-            <div class="golden-spiral">
-                <svg viewBox="0 0 100 100">
-                    <path d="M50,0 C77.614,0 100,22.386 100,50 C100,77.614 77.614,100 50,100 C22.386,100 0,77.614 0,50 C0,22.386 22.386,0 50,0 Z" fill="none" stroke="#000000" stroke-width="2"/>
-                    <path d="M50,10 C66.568,10 80,23.432 80,40 C80,56.568 66.568,70 50,70 C33.432,70 20,56.568 20,40 C20,23.432 33.432,10 50,10 Z" fill="none" stroke="#000000" stroke-width="2"/>
-                </svg>
-            </div>
-        </header>
-        
-        <div class="prediction-highlight">
-            <div class="prediction-title">PREDICCIÓN PARA <span id="current-timeframe">7D</span> (<span id="currency-name">Bitcoin</span>)</div>
-            <div class="prediction-value" id="prediction-price">$--</div>
-            <div class="confidence-indicator" id="confidence-level">Confianza: --%</div>
+  <div class="container">
+    <!-- Compact header -->
+    <header>
+      <div class="logo">
+        <div class="logo-icon">B</div>
+        <h1>Burex Bitcoin Oracle v4.1</h1>
+      </div>
+      <div class="header-actions">
+        <button class="theme-toggle" aria-label="Cambiar tema">
+          <i class="fas fa-moon"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Featured prediction -->
+    <section class="prediction-card">
+      <div class="prediction-content">
+        <div class="prediction-title">PREDICCIÓN PARA <span id="current-timeframe">7D</span></div>
+        <div class="prediction-value" id="prediction-price">$--</div>
+        <div class="confidence-indicator">
+          <span id="confidence-level">Confianza: --%</span>
+          <span class="confidence-dot" id="confidence-dot"></span>
         </div>
-        
-        <div class="dashboard">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title"><i class="fas fa-chart-line"></i> Análisis de <span id="currency-name-chart">Bitcoin</span></h2>
-                    <div>
-                        <select id="currency-selector" aria-label="Seleccionar criptomoneda">
-                            <option value="BTC">Bitcoin (BTC)</option>
-                            <option value="ETH">Ethereum (ETH)</option>
-                            <option value="XRP">Ripple (XRP)</option>
-                        </select>
-                        <span id="data-points">-- puntos</span>
-                        <button class="refresh-btn" aria-label="Actualizar datos de precios ahora">
-                            <i class="fas fa-sync" aria-hidden="true"></i> Actualizar
-                        </button>
-                        <button class="export-btn" aria-label="Exportar datos como CSV">
-                            <i class="fas fa-download" aria-hidden="true"></i> Exportar
-                        </button>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="price-chart" aria-label="Gráfico de precios de criptomoneda"></canvas>
-                    <div class="chart-error" id="chart-error" role="alert"></div>
-                </div>
-                <div class="timeframe-selector">
-                    <button class="timeframe-btn active" data-timeframe="7" aria-label="Mostrar datos de los últimos 7 días">7D</button>
-                    <button class="timeframe-btn" data-timeframe="15" aria-label="Mostrar datos de los últimos 15 días">15D</button>
-                    <button class="timeframe-btn" data-timeframe="30" aria-label="Mostrar datos de los últimos 30 días">30D</button>
-                    <button class="timeframe-btn" data-timeframe="90" aria-label="Mostrar datos de los últimos 90 días">90D</button>
-                    <button class="timeframe-btn" data-timeframe="180" aria-label="Mostrar datos de los últimos 180 días">180D</button>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title"><i class="fas fa-calculator"></i> Detalles de Predicción</h2>
-                </div>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">PRECIO ACTUAL</div>
-                        <div class="stat-value" id="current-price">$--</div>
-                        <div class="stat-label" id="price-change">--% (24h)</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">PRECISIÓN HISTÓRICA</div>
-                        <div class="stat-value" id="accuracy-rate">--%</div>
-                        <div class="accuracy-bar">
-                            <div class="accuracy-fill" id="accuracy-bar-fill" style="width: 0%;"></div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">NIVELES FIBONACCI</div>
-                        <div class="stat-value" id="fib-levels">0/5</div>
-                        <div class="stat-label">detectados</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">IMPULSO ÁUREO</div>
-                        <div class="stat-value" id="golden-momentum">--%</div>
-                        <div class="stat-label">φ = 1.618</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">RSI (14 DÍAS)</div>
-                        <div class="stat-value" id="rsi-value">--</div>
-                        <div class="stat-label">Índice de Fuerza Relativa</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">VOLATILIDAD</div>
-                        <div class="stat-value" id="volatility">--%</div>
-                        <div class="stat-label">Desviación Estándar (30D)</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">TENDENCIA EMA</div>
-                        <div class="stat-value" id="ema-trend">--</div>
-                        <div class="stat-label">50/200 días</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">FACTOR ÁUREO</div>
-                        <div class="stat-value" id="golden-factor">1.618</div>
-                        <div class="stat-label">φ</div>
-                    </div>
-                </div>
-            </div>
+      </div>
+      <div class="current-price">
+        <div class="stat-label">PRECIO ACTUAL</div>
+        <div class="stat-value" id="current-price">$--</div>
+        <div class="stat-label" id="price-change">--% (24h)</div>
+      </div>
+    </section>
+
+    <!-- Dashboard -->
+    <div class="dashboard">
+      <!-- Price chart -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><i class="fas fa-chart-line"></i> Análisis de Bitcoin</h2>
+          <div class="timeframe-selector">
+            <button class="timeframe-btn active" data-timeframe="7">7D</button>
+            <button class="timeframe-btn" data-timeframe="15">15D</button>
+            <button class="timeframe-btn" data-timeframe="30">30D</button>
+            <button class="timeframe-btn" data-timeframe="90">90D</button>
+            <button class="timeframe-btn" data-timeframe="180">180D</button>
+          </div>
         </div>
-        
-        <div class="fibonacci-explanation">
-            <h3 class="explanation-title">Cómo funciona Burex Trend Caster v3.5</h3>
-            <p class="explanation-content">
-                Combinamos el <span class="fibonacci-highlight">Número Áureo (φ ≈ 1.618)</span>, niveles de retroceso y extensión de Fibonacci (<span class="fibonacci-highlight">23.6%, 38.2%, 50%, 61.8%, 78.6%, 1.272, 1.414, 1.618, 2.0, 2.618</span>), el Índice de Fuerza Relativa (RSI) y la volatilidad reciente para predecir precios de criptomonedas. 
-                El sistema analiza datos históricos mediante regresión lineal ponderada, identifica niveles clave de soporte y resistencia mediante clustering estadístico, y aplica un modelo que ajusta el impulso reciente, los niveles de Fibonacci detectados, la tendencia EMA y las condiciones de mercado. 
-                Incluye un factor de confianza basado en la precisión histórica, la estabilidad del mercado y la convergencia de indicadores.
-            </p>
+        <div class="chart-container">
+          <canvas id="price-chart" aria-label="Gráfico de precios de Bitcoin"></canvas>
         </div>
+      </div>
+
+      <!-- Prediction details -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><i class="fas fa-calculator"></i> Indicadores Clave</h2>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+men            <div class="stat-label">PRECISIÓN HISTÓRICA</div>
+            <div class="stat-value" id="accuracy-rate">--%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">NIVELES FIBONACCI</div>
+            <div class="stat-value" id="fib-levels">0/12</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">IMPULSO ÁUREO</div>
+            <div class="stat-value" id="golden-momentum">--%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">RSI (14 DÍAS)</div>
+            <div class="stat-value" id="rsi-value">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">VOLATILIDAD</div>
+            <div class="stat-value" id="volatility">--%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">TENDENCIA EMA</div>
+            <div class="stat-value" id="ema-trend">--</div>
+          </div>
+        </div>
+      </div>
     </div>
-    
-    <div class="notification" id="notification" role="alert">
-        <div class="notification-icon">⚠️</div>
-        <div>
-            <div id="notification-message">Cargando datos...</div>
-            <button class="close-btn" aria-label="Cerrar notificación">×</button>
-        </div>
-    </div>
-    
-    <div class="loading-overlay" id="loading-overlay" role="status" aria-live="polite">
-        <div>
-            <div class="loader"></div>
-            <div class="loading-text" id="loading-text">Conectando con CryptoCompare API...</div>
-            <progress value="0" max="100" id="loading-progress" aria-label="Progreso de carga"></progress>
-        </div>
-    </div>
-    
+
+    <!-- Footer -->
     <footer>
-        <p>Burex Trend Caster v3.5 - Predicciones de criptomonedas con Número Áureo, Fibonacci y RSI</p>
-        <p>© 2025 Todos los derechos reservados | Datos actualizados cada 5 minutos</p>
+      <p>Burex Bitcoin Oracle v4.1 - Predicciones de Bitcoin con Número Áureo y Fibonacci</p>
+      <p>© 2025 Todos los derechos reservados | Datos actualizados cada 5 minutos</p>
     </footer>
-    
-    <!-- Enlace al archivo JavaScript -->
-    <script src="script.js"></script>
+  </div>
+
+  <!-- Notification -->
+  <div class="notification" id="notification" role="alert">
+    <span id="notification-message">Cargando datos...</span>
+  </div>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loading-overlay" role="status" aria-live="polite">
+    <div class="loader"></div>
+    <div class="loading-text" id="loading-text">Conectando con CryptoCompare API...</div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
