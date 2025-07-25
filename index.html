@@ -3,58 +3,77 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Burex Bitcoin Oracle v4.1</title>
-  <!-- Optimized dependencies -->
+  <title>Burex Quantum Forecast</title>
+  <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap">
 </head>
 <body>
+  <div class="grid-lines" id="grid-lines"></div>
   <div class="container">
-    <!-- Compact header -->
     <header>
       <div class="logo">
         <div class="logo-icon">
-          <img src="BUREX_logo.png" alt="Burex Logo" style="height: 40px;">
+          <i class="fas fa-bitcoin-sign"></i>
         </div>
-        <h1>BTC: Burex Trend Caster</h1>
+        <h1>BUREX TREND CASTER</h1>
       </div>
       <div class="header-actions">
+        <button id="export-btn" class="corporate-btn">
+          <i class="fas fa-download"></i>
+        </button>
         <button class="theme-toggle" aria-label="Cambiar tema">
-          <i class="fas fa-moon"></i>
+          <i class="fas fa-sun"></i>
+        </button>
+        <button id="refresh-btn" class="refresh-btn">
+          <i class="fas fa-sync-alt"></i>
         </button>
       </div>
     </header>
 
-    <!-- Featured prediction -->
-    <section class="prediction-card">
-      <div class="prediction-content">
-        <div class="prediction-title">PREDICCIÓN PARA <span id="current-timeframe">7D</span></div>
-        <div class="prediction-value" id="prediction-price">$--</div>
-        <div class="confidence-indicator">
-          <span id="confidence-level">Confianza: --%</span>
-          <span class="confidence-dot" id="confidence-dot"></span>
+    <section class="unified-card">
+      <div class="prediction-header">
+        <div class="prediction-main">
+          <div class="prediction-title">PREDICCIÓN BTC <span id="current-timeframe">7D</span></div>
+          <div class="prediction-value" id="prediction-price">$--</div>
+          <div class="confidence-indicator">
+            <span id="confidence-level">Confianza: --%</span>
+            <div class="confidence-meter">
+              <div class="confidence-fill" id="confidence-fill"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="market-stats">
+          <div class="stat-box">
+            <div class="stat-label">PRECIO ACTUAL</div>
+            <div class="stat-value" id="current-price">$--</div>
+            <div class="stat-change" id="price-change">--% (24h)</div>
+          </div>
+          
+          <div class="stat-box">
+            <div class="stat-label">SENTIMIENTO</div>
+            <div class="sentiment-value" id="sentiment-value">--</div>
+          </div>
+          
+          <div class="stat-box">
+            <div class="stat-label">VOLATILIDAD</div>
+            <div class="stat-value" id="volatility">--%</div>
+          </div>
         </div>
       </div>
-      <div class="current-price">
-        <div class="stat-label">PRECIO ACTUAL</div>
-        <div class="stat-value" id="current-price">$--</div>
-        <div class="stat-label" id="price-change">--% (24h)</div>
-      </div>
-    </section>
 
-    <!-- Dashboard -->
-    <div class="dashboard">
-      <!-- Price chart -->
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title"><i class="fas fa-chart-line"></i> Análisis de Bitcoin</h2>
+      <div class="chart-section">
+        <div class="chart-header">
+          <h2 class="chart-title"><i class="fas fa-chart-line"></i> Análisis de Bitcoin</h2>
           <div class="timeframe-selector">
+            <button class="timeframe-btn" data-timeframe="15m">15M</button>
+            <button class="timeframe-btn" data-timeframe="1h">1H</button>
+            <button class="timeframe-btn" data-timeframe="4h">4H</button>
+            <button class="timeframe-btn" data-timeframe="12h">12H</button>
+            <button class="timeframe-btn" data-timeframe="1d">1D</button>
             <button class="timeframe-btn active" data-timeframe="7">7D</button>
             <button class="timeframe-btn" data-timeframe="15">15D</button>
             <button class="timeframe-btn" data-timeframe="30">30D</button>
@@ -66,54 +85,102 @@
           <canvas id="price-chart" aria-label="Gráfico de precios de Bitcoin"></canvas>
         </div>
       </div>
+    </section>
 
-      <!-- Prediction details -->
+    <div class="indicators-grid">
       <div class="card">
         <div class="card-header">
-          <h2 class="card-title"><i class="fas fa-calculator"></i> Indicadores Clave</h2>
+          <h2 class="card-title"><i class="fas fa-calculator"></i> Indicadores Técnicos</h2>
         </div>
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-label">PRECISIÓN HISTÓRICA</div>
-            <div class="stat-value" id="accuracy-rate">--%</div>
+            <div class="stat-label">ICHIMOKU</div>
+            <div class="stat-value" id="ichimoku-trend">--</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">NIVELES FIBONACCI</div>
-            <div class="stat-value" id="fib-levels">0/12</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">IMPULSO ÁUREO</div>
-            <div class="stat-value" id="golden-momentum">--%</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">RSI (14 DÍAS)</div>
+            <div class="stat-label">RSI (14D)</div>
             <div class="stat-value" id="rsi-value">--</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">VOLATILIDAD</div>
-            <div class="stat-value" id="volatility">--%</div>
+            <div class="stat-label">FIBONACCI</div>
+            <div class="stat-value" id="fib-levels">0/12</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">TENDENCIA EMA</div>
-            <div class="stat-value" id="ema-trend">--</div>
+            <div class="stat-label">ADX</div>
+            <div class="stat-value" id="adx-value">--</div>
           </div>
+          <div class="stat-card">
+            <div class="stat-label">VOLUMEN PROFILE</div>
+            <div class="stat-value" id="volume-profile">--</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><i class="fas fa-history"></i> Historial de Predicciones</h2>
+        </div>
+        <div class="history-container" id="signal-history">
+          <p class="empty-history">No hay datos históricos disponibles</p>
         </div>
       </div>
     </div>
 
-    <!-- Footer -->
+    <section class="comparative-section">
+      <h2 class="card-title"><i class="fas fa-chart-radar"></i> Análisis Comparativo</h2>
+      <div class="comparative-grid">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-percentage"></i> Rendimiento del Algoritmo</h3>
+          </div>
+          <div class="comparative-chart-container">
+            <canvas id="comparative-chart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-lightbulb"></i> Estadísticas Clave</h3>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">MÁX. HISTÓRICO</div>
+              <div class="stat-value" id="alltime-high">$--</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">MÁX. ANUAL</div>
+              <div class="stat-value" id="yearly-high">$--</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">VOLATILIDAD MENSUAL</div>
+              <div class="stat-value" id="monthly-volatility">--%</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">PRECISIÓN HISTÓRICA</div>
+              <div class="stat-value" id="historical-accuracy">--%</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">TASA DE ACIERTO</div>
+              <div class="stat-value" id="success-rate">--%</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">RETORNO ANUAL</div>
+              <div class="stat-value" id="annual-return">--%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <footer>
-      <p>Burex Bitcoin Oracle v4.1 - Predicciones de Bitcoin con Número Áureo y Fibonacci</p>
-      <p>© 2025 Todos los derechos reservados | Datos actualizados cada 5 minutos</p>
+      <p>BTC: Burex Trend Caster - Predictive Analytics for Institutional Trading</p>
+      <p>© 2025 Burex Financial Technologies. Todos los derechos reservados | Datos actualizados cada 5 minutos</p>
     </footer>
   </div>
 
-  <!-- Notification -->
   <div class="notification" id="notification" role="alert">
     <span id="notification-message">Cargando datos...</span>
   </div>
 
-  <!-- Loading overlay -->
   <div class="loading-overlay" id="loading-overlay" role="status" aria-live="polite">
     <div class="loader"></div>
     <div class="loading-text" id="loading-text">Conectando con CryptoCompare API...</div>
